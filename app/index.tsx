@@ -1,159 +1,149 @@
 import { useState, useEffect } from 'react'
-import { Text, ScrollView } from 'react-native'
-import { Worklet } from 'react-native-bare-kit'
-import RPC from 'bare-rpc'
-import { bundle, COMMANDS, MODULES, WdkModuleMetadata } from '@tetherto/pear-wrk-wdk'
+import { Text, ScrollView, View, StyleSheet } from 'react-native'
+import { useWallet, useWorklet } from '@tetherto/wdk-react-native-core'
+import type { NetworkConfigs } from '@tetherto/wdk-react-native-core'
 
-export default function () {
-  const [response, setResponse] = useState<string | null>(null)
+// Dummy network configuration for testing
+const TEST_NETWORKS = {
+  ethereum: {
+    chainId: 1, // Sepolia
+    blockchain: 'ethereum',
+    provider: 'https://eth.llamarpc.com',
+  },
+  'bitcoin-testnet': {
+    network: 'testnet',
+    host: 'electrum.blockstream.info',
+    port: '50001'
+  },
+  // polygon: {
+  //   chainId: 137, // Sepolia
+  //   blockchain: 'polygon',
+  //   provider: 'https://api.zan.top/polygon-mainnet'
+  // },
+  // arbitrum: {
+  //   chainId: 42161, // Sepolia
+  //   blockchain: 'arbitrum',
+  //   provider: 'https://api.zan.top/arb-one'
+  // },
+  // plasma: {
+  //   chainId: 9745, // Sepolia
+  //   blockchain: 'plasma',
+  //   provider: 'https://rpc.plasma.to'
+  // },
+  // sepolia: {
+  //   chainId: 11155111, // Sepolia
+  //   blockchain: 'sepolia',
+  //   provider: 'https://ethereum-sepolia.gateway.tatum.io',
+  //   bundlerUrl: 'https://api.candide.dev/public/v3/sepolia',
+  //   paymasterUrl: 'https://api.candide.dev/public/v3/sepolia',
+  //   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
+  //   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+  //   safeModulesVersion: '0.3.0',
+  //   paymasterToken: {
+  //     address: '0xFa5854FBf9964330d761961F46565AB7326e5a3b',
+  //   }
+  // },
+  spark: {
+  }
+}
+
+export default function App() {
+  const {
+    isWorkletStarted,
+    isInitialized,
+    isLoading,
+    error,
+    startWorklet,
+    generateEntropyAndEncrypt,
+    initializeWDK,
+    encryptedSeed
+  } = useWorklet()
+  const { getAddress } = useWallet() 
+
+  const [logs, setLogs] = useState<string[]>([])
+  const [address, setAddress] = useState<string>()
+
+  const log = (msg: string) => {
+    console.log(`[App] ${msg}`)
+    setLogs(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev])
+  }
 
   useEffect(() => {
-    const worklet = new Worklet()
-
-    worklet.start('/worklet.bundle', bundle)
-
-    const { IPC } = worklet
-
-    const rpc = new RPC(IPC, (req) => {
-      console.log(req.command)
-    })
-
-    const networkConfigs: Record<string, any> = {
-      ethereum: {
-        chainId: 1,
-        blockchain: 'ethereum',
-        provider: 'https://rpc.mevblocker.io/fast',
-        bundlerUrl: 'https://api.candide.dev/public/v3/ethereum',
-        paymasterUrl: 'https://api.candide.dev/public/v3/ethereum',
-        paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
-        entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
-        safeModulesVersion: '0.3.0',
-        paymasterToken: {
-          address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDT
-        },
-        transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDT if 6 decimals)
-      },
-      bitcoin: {
-        network: 'testnet',
-        host: 'electrum.blockstream.info',
-        port: 50001
-      },
-      polygon: {
-        chainId: 137,
-        blockchain: 'polygon',
-        provider: 'https://polygon-rpc.com',
-        bundlerUrl: 'https://api.candide.dev/public/v3/polygon',
-        paymasterUrl: 'https://api.candide.dev/public/v3/polygon',
-        paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
-        entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
-        safeModulesVersion: '0.3.0',
-        paymasterToken: {
-          address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F' // USDT on Polygon
-        },
-        transferMaxFee: 100000
-      },
-      spark: {
-        network: 'REGTEST'
-      },
-      solana: {
-        rpcUrl: 'https://api.devnet.solana.com',
-        wsUrl: 'wss://api.devnet.solana.com'
-      },
-      tron: {
-        provider: 'https://api.trongrid.io'
-      },
-      ton: {
-        tonClient: {
-          url: 'https://testnet.toncenter.com/api/v2/jsonRPC'
-        }
-      },
-      aave: {
-        provider: 'https://rpc.mevblocker.io/fast',
-        transferMaxFee: 100000
-      }
-    }
-
-    const run = async () => {
-      const logs: string[] = []
-      const appendLog = (title: string, data: any) => {
-        const entry = `=== ${title} ===\n${typeof data === 'string' ? data : JSON.stringify(data, null, 2)}`
-        console.log(entry)
-        logs.push(entry)
-        setResponse(logs.join('\n\n'))
+    const init = async () => {
+      // If already fully initialized, do nothing
+      if (isInitialized) {
+        return
       }
 
       try {
-        const pingReq = rpc.request(COMMANDS.PING)
-        pingReq.send()
-        const pingRes = await pingReq.reply('utf-8')
-        appendLog('PING', pingRes)
+        // Step 1: Start Worklet
+        if (!isWorkletStarted && !isLoading) {
+           log('Starting worklet...')
+           // @ts-ignore
+           await startWorklet(TEST_NETWORKS) // todo
+           log('Worklet started')
+        }
 
-        const items: WdkModuleMetadata[] = [
-          {
-            type: 'wallet',
-            name: 'ethereum',
-            moduleName: MODULES.EVM,
-            network: 'ethereum',
-            config: networkConfigs.ethereum
-          },
-          {
-            type: 'wallet',
-            name: 'polygon',
-            moduleName: MODULES.EVM_ERC_4337,
-            network: 'polygon',
-            config: networkConfigs.polygon
-          },
-          {
-            type: 'wallet',
-            name: 'bitcoin',
-            moduleName: MODULES.BTC,
-            network: 'bitcoin',
-            config: networkConfigs.bitcoin
-          },
-          {
-            type: 'wallet',
-            name: 'spark',
-            moduleName: MODULES.SPARK,
-            network: 'spark',
-            config: networkConfigs.spark
-          },
-          {
-            type: 'protocol',
-            name: 'aave',
-            moduleName: MODULES.AAVE_EVM,
-            network: 'ethereum',
-            config: networkConfigs.aave
-          }
-        ]
+        // Step 2 & 3: Generate Keys and Initialize WDK
+        // We check if worklet is started and we don't have a seed yet
+        if (isWorkletStarted && !encryptedSeed && !isLoading) {
+           log('Generating entropy...')
+           const { encryptionKey, encryptedSeedBuffer } = await generateEntropyAndEncrypt(12)
+           log('Entropy generated')
+           
+           log(encryptionKey)
+           log(encryptedSeedBuffer)
 
-        const startReq = rpc.request(COMMANDS.START)
-        startReq.send(JSON.stringify({
-          seedPhrase: 'seed-here',
-          items
-        }))
-        const startRes = await startReq.reply('utf-8')
-        appendLog('START', JSON.parse(startRes as string))
-
-        const getAddressReq = rpc.request(COMMANDS.GET_ADDRESS)
-        getAddressReq.send(JSON.stringify(['ethereum', 'polygon', 'bitcoin', 'spark']))
-        const getAddressRes = await getAddressReq.reply('utf-8')
-        appendLog('GET_ADDRESS', JSON.parse(getAddressRes as string))
-
-        const quoteReq = rpc.request(COMMANDS.QUOTE_LENDING_SUPPLY)
-        quoteReq.send(JSON.stringify([
-          { chain: 'ethereum', name: 'aave' },
-          { token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', amount: 1000000000 }
-        ]))
-        const quoteRes = await quoteReq.reply('utf-8')
-        appendLog('QUOTE_LENDING_SUPPLY', JSON.parse(quoteRes as string))
-      } catch (err) {
-        console.error(err)
-        appendLog('ERROR', err)
+           log('Initializing WDK...')
+           await initializeWDK({ encryptionKey, encryptedSeed: encryptedSeedBuffer })
+           log('WDK Initialized successfully')
+        }
+      } catch (err: any) {
+        log(`Error: ${err.message || err}`)
       }
     }
 
-    run()
-  }, [])
+    init()
+  }, [isWorkletStarted, isInitialized, encryptedSeed, isLoading])
+  
+  useEffect(() => {
+    const fetchInfo = async () => {
+      if (isInitialized) {
+        Promise.all(Object.keys(TEST_NETWORKS).map(async (network) => {
+          const addr = await getAddress(network)
+          log(network + ': ' + addr)
+        }))
+      }
+    }
+    
+    fetchInfo()
+  }, [isInitialized])
 
-  return <ScrollView><Text>{response}</Text></ScrollView>
+  return (
+    <ScrollView style={styles.container}>
+      <Text style={styles.header}>WDK React Native Test</Text>
+
+      <View style={styles.statusContainer}>
+         <Text>Worklet Started: {isWorkletStarted ? '✅' : '❌'}</Text>
+         <Text>WDK Initialized: {isInitialized ? '✅' : '❌'}</Text>
+         <Text>Loading: {isLoading ? '⏳' : 'Idle'}</Text>
+         {error && <Text style={styles.error}>Error: {error}</Text>}
+      </View>
+
+      <View style={styles.logsContainer}>
+        <Text style={styles.logsHeader}>Logs:</Text>
+        {logs.map((l, i) => <Text key={i} style={styles.logText}>{l}</Text>)}
+      </View>
+    </ScrollView>
+  )
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 20, paddingTop: 60, backgroundColor: '#f5f5f5' },
+  header: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
+  statusContainer: { backgroundColor: 'white', padding: 15, borderRadius: 10, marginBottom: 20 },
+  error: { color: 'red', marginTop: 10 },
+  logsContainer: { flex: 1 },
+  logsHeader: { fontWeight: 'bold', marginBottom: 10 },
+  logText: { fontFamily: 'monospace', fontSize: 12, marginBottom: 4 }
+})

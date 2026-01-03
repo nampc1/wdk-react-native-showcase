@@ -32,7 +32,7 @@
     "react-native-b4a": "^0.0.4",
     "react-native-bare-kit": "^0.11.0",
     "react-native-safe-area-context": "^5.4.0",
-    "@tetherto/pear-wrk-wdk": "github:nampc1/pear-wrk-wdk-v2-fork#nampc-worklet-poc",
+    "@tetherto/wdk-react-native-core": "/home/nampc/dev/tether/wdk-react-native-core-fork/tetherto-wdk-react-native-core-1.0.0.tgz",
     "bare-rpc": "^1.1.0"
   },
   "devDependencies": {
