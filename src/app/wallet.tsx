@@ -1,5 +1,5 @@
 import { RefreshCw } from 'lucide-react-native';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   RefreshControl,
   ScrollView,
@@ -10,7 +10,7 @@ import {
   Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useWallet, useWdkApp } from '@tetherto/wdk-react-native-core';
+import { useWallet, useBalancesForWallet, useRefreshBalance } from '@tetherto/wdk-react-native-core';
 import { colors } from '@/constants/colors';
 import chainConfigs from '@/config/chain';
 import { tokenConfigs } from '@/config/token';
@@ -44,11 +44,10 @@ const TOKEN_LOGOS: Record<string, any> = {
 
 export default function WalletScreen() {
   const insets = useSafeAreaInsets();
-  const { isInitialized, getAddress, getBalance, balances } = useWallet();
-  const { refreshBalances } = useWdkApp();
+  const { isInitialized, getAddress } = useWallet();
+  const { data: balancesData, isLoading: balancesLoading, refetch: refetchBalances } = useBalancesForWallet(0, tokenConfigs);
   
   const [refreshing, setRefreshing] = useState(false);
-  const [assets, setAssets] = useState<Asset[]>([]);
   const [addresses, setAddresses] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -71,58 +70,64 @@ export default function WalletScreen() {
     fetchAddresses();
   }, [isInitialized]);
 
-  useEffect(() => {
-    if (!isInitialized) return;
-    
-    const chains = chainConfigs();
-    const newAssets: Asset[] = [];
+  const assets = useMemo(() => {
+      if (!isInitialized || !balancesData) return [];
+      
+      const chains = chainConfigs();
+      const newAssets: Asset[] = [];
 
-    Object.entries(chains).forEach(([networkKey, chainConfig]) => {
-      const address = addresses[networkKey];
-      if (!address) return;
+      Object.entries(chains).forEach(([networkKey, chainConfig]) => {
+        const address = addresses[networkKey];
+        if (!address) return;
 
-      // Native Asset
-      const nativeConfig = tokenConfigs[networkKey as keyof typeof tokenConfigs]?.native;
-      if (nativeConfig) {
-        const balance = getBalance(0, networkKey, null) || '0';
-        newAssets.push({
-          symbol: nativeConfig.symbol,
-          name: nativeConfig.name,
-          network: networkKey, // Or chainConfig.name if available
-          address: address,
-          balance: balance,
-          usdValue: '0.00',
-          color: ASSET_COLORS[nativeConfig.symbol] || ASSET_COLORS.DEFAULT,
-          logo: TOKEN_LOGOS[nativeConfig.symbol],
-        });
-      }
+        // Native Asset
+        const nativeConfig = tokenConfigs[networkKey as keyof typeof tokenConfigs]?.native;
+        if (nativeConfig) {
+            // Find balance in balancesData
+            const balanceData = balancesData.find(b => b.network === networkKey && b.tokenAddress === null);
+            const balance = balanceData?.balance || '0';
 
-      // Tokens
-      const tokens = tokenConfigs[networkKey as keyof typeof tokenConfigs]?.tokens || [];
-      tokens.forEach(token => {
-        const balance = getBalance(0, networkKey, token.address) || '0';
-        newAssets.push({
-          symbol: token.symbol,
-          name: token.name,
-          network: networkKey,
-          address: address,
-          balance: balance,
-          usdValue: '0.00',
-          color: ASSET_COLORS[token.symbol] || ASSET_COLORS.DEFAULT,
-          logo: TOKEN_LOGOS[token.symbol],
+            newAssets.push({
+                symbol: nativeConfig.symbol,
+                name: nativeConfig.name,
+                network: networkKey,
+                address: address,
+                balance: balance,
+                usdValue: '0.00',
+                color: ASSET_COLORS[nativeConfig.symbol] || ASSET_COLORS.DEFAULT,
+                logo: TOKEN_LOGOS[nativeConfig.symbol],
+            });
+        }
+
+        // Tokens
+        const tokens = tokenConfigs[networkKey as keyof typeof tokenConfigs]?.tokens || [];
+        tokens.forEach(token => {
+             // Find balance in balancesData
+            const balanceData = balancesData.find(b => b.network === networkKey && b.tokenAddress === token.address);
+            const balance = balanceData?.balance || '0';
+            
+            newAssets.push({
+                symbol: token.symbol,
+                name: token.name,
+                network: networkKey,
+                address: address,
+                balance: balance,
+                usdValue: '0.00',
+                color: ASSET_COLORS[token.symbol] || ASSET_COLORS.DEFAULT,
+                logo: TOKEN_LOGOS[token.symbol],
+            });
         });
       });
-    });
+      return newAssets;
+  }, [isInitialized, addresses, balancesData]);
 
-    setAssets(newAssets);
-  }, [isInitialized, addresses, balances]);
 
   const totalBalance = "$0.00"; // Mock total for now
 
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await refreshBalances();
+      await refetchBalances();
     } catch (e) {
       console.error(e);
     } finally {
@@ -161,7 +166,7 @@ export default function WalletScreen() {
         <View style={styles.assetList}>
           {assets.length === 0 ? (
             <Text style={{color: colors.textSecondary, textAlign: 'center', marginTop: 20}}>
-              {isInitialized ? 'No assets found' : 'Initializing...'}
+              {isInitialized && !balancesLoading ? 'No assets found' : 'Initializing...'}
             </Text>
           ) : (
             assets.map((asset, index) => (

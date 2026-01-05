@@ -4,6 +4,7 @@
     "strict": true,
     "esModuleInterop": true,
     "baseUrl": ".",
+    "jsx": "react-native",
     "paths": {
       "@/*": ["src/*"]
     }

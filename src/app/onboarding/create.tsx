@@ -1,23 +1,25 @@
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { useWalletSetup, useMnemonic } from '@tetherto/wdk-react-native-core';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { useWalletManager } from '@tetherto/wdk-react-native-core';
 import { colors } from '../../constants/colors';
 import chainConfigs from '../../config/chain';
 
 export default function CreateWallet() {
   const router = useRouter();
-  const { initializeWallet, isInitializing, error } = useWalletSetup(chainConfigs());
-  const { mnemonic, isLoading: mnemonicLoading, error: mnemonicError } = useMnemonic();
+  const { initializeWallet, getMnemonic, isInitializing, error } = useWalletManager(undefined, chainConfigs());
+  const [mnemonic, setMnemonic] = useState<string | null>(null);
   const [created, setCreated] = useState(false);
 
   useEffect(() => {
-    console.log("CreateWallet debug:", { mnemonic: !!mnemonic, mnemonicLoading, mnemonicError, created });
-  }, [mnemonic, mnemonicLoading, mnemonicError, created]);
+    console.log("CreateWallet debug:", { mnemonic: !!mnemonic, isInitializing, error, created });
+  }, [mnemonic, isInitializing, error, created]);
 
   const handleGenerate = async () => {
     try {
       await initializeWallet({ createNew: true });
+      const phrase = await getMnemonic();
+      setMnemonic(phrase);
       setCreated(true);
     } catch (e) {
       console.error("Failed to initialize wallet", e);
@@ -34,8 +36,8 @@ export default function CreateWallet() {
        
        {!mnemonic && !created ? (
          <View style={styles.placeholderBox}>
-            {mnemonicLoading ? (
-                <Text style={styles.placeholderText}>Loading phrase...</Text>
+            {isInitializing ? (
+                <Text style={styles.placeholderText}>Generating wallet...</Text>
             ) : (
                 <>
                 <Text style={styles.placeholderText}>
@@ -56,8 +58,7 @@ export default function CreateWallet() {
          </View>
        )}
 
-       {error ? <Text style={styles.errorText}>Init Error: {error}</Text> : null}
-       {mnemonicError ? <Text style={styles.errorText}>Mnemonic Error: {mnemonicError.message || String(mnemonicError)}</Text> : null}
+       {error ? <Text style={styles.errorText}>Error: {error}</Text> : null}
 
        {(mnemonic || created) && (
          <TouchableOpacity onPress={handleContinue} style={styles.button}>
