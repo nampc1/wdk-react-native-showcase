@@ -81,8 +81,6 @@ const ConfigGroup = ({ title, subtitle, chainData, tokenData }: { title: string,
 };
 
 export default function ViewConfigScreen() {
-  const chains = chainConfigs();
-
   return (
     <FeatureLayout 
       title="Network Configuration" 
@@ -105,7 +103,7 @@ export default function ViewConfigScreen() {
       </View>
 
       <View style={styles.list}>
-        {Object.entries(chains).map(([key, chainConfig]: [string, any]) => {
+        {Object.entries(chainConfigs).map(([key, chainConfig]: [string, any]) => {
           // @ts-ignore
           const tokenConfig = tokenConfigs[key];
           

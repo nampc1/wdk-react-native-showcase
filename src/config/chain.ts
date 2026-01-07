@@ -1,5 +1,4 @@
-const chainConfigs = () => {
-  return {
+const chainConfigs = {
     ethereum: {
       chainId: 1, // Sepolia
       blockchain: 'ethereum',
@@ -40,7 +39,6 @@ const chainConfigs = () => {
     // },
     // spark: {},
   };
-};
 // const getChainsConfig = () => {
 //   return {
 //     ethereum: {

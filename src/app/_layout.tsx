@@ -39,7 +39,7 @@ const SplashHandler = ({ children }: { children: React.ReactNode }) => {
 export default function RootLayout() {
   return (
     <WdkAppProvider
-      networkConfigs={chainConfigs()}
+      networkConfigs={chainConfigs}
       tokenConfigs={tokenConfigs}
     >
       <SplashHandler>

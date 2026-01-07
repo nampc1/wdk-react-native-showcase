@@ -12,7 +12,7 @@ interface Props {
 
 export const ChainSelector: React.FC<Props> = ({ selectedChain, onSelectChain, label = "Network" }) => {
   const [modalVisible, setModalVisible] = useState(false);
-  const chains = Object.keys(chainConfigs());
+  const chains = Object.keys(chainConfigs);
 
   const handleSelect = (chain: string) => {
     onSelectChain(chain);

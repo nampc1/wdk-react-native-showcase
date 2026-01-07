@@ -33,7 +33,7 @@ export const ActionCard: React.FC<Props> = ({
     const initial: Record<string, any> = {};
     fields.forEach(f => {
       if (f.defaultValue !== undefined) initial[f.id] = f.defaultValue;
-      else if (f.type === 'chain') initial[f.id] = Object.keys(chainConfigs())[0];
+      else if (f.type === 'chain') initial[f.id] = Object.keys(chainConfigs)[0];
       else initial[f.id] = '';
     });
     return initial;

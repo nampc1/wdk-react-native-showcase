@@ -17,7 +17,7 @@ export default function ManageAccountScreen() {
     getMnemonic,
     wallets,
     activeWalletId
-  } = useWalletManager(undefined, chainConfigs());
+  } = useWalletManager(undefined, chainConfigs);
 
   return (
     <FeatureLayout 
@@ -39,7 +39,7 @@ export default function ManageAccountScreen() {
           { id: 'walletId', type: 'text', label: 'Wallet ID (Email)', placeholder: 'user@example.com' }
         ]}
         action={async ({ walletId }) => {
-          await createWallet(walletId, chainConfigs());
+          await createWallet(walletId, chainConfigs);
           return { success: true, message: `Wallet ${walletId} created` };
         }}
         actionLabel="Create Wallet"
