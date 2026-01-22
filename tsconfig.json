@@ -6,7 +6,8 @@
     "baseUrl": ".",
     "jsx": "react-native",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      ".wdk": [".wdk-bundle/wdk-worklet.bundle.js"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"]

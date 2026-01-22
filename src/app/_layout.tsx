@@ -11,7 +11,7 @@ import 'react-native-reanimated';
 import { Toaster } from 'sonner-native';
 import { colors } from '../constants/colors';
 import chainConfigs from '../config/chain';
-import { tokenConfigs } from '../config/token';
+import bundle from '.wdk';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -37,10 +37,11 @@ const SplashHandler = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default function RootLayout() {
+  console.log(bundle.slice(0,100))
   return (
     <WdkAppProvider
       networkConfigs={chainConfigs}
-      tokenConfigs={tokenConfigs}
+      bundle={{ bundle }}
     >
       <SplashHandler>
         <GestureHandlerRootView style={{ flex: 1 }}>

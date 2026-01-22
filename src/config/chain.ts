@@ -1,8 +1,8 @@
 const chainConfigs = {
     ethereum: {
-      chainId: 1, // Sepolia
+      chainId: 11155111, // Sepolia
       blockchain: 'ethereum',
-      provider: 'https://eth.llamarpc.com',
+      provider: 'https://ethereum-sepolia.gateway.tatum.io',
     },
     // 'bitcoin-testnet': {
     //   network: 'testnet',

@@ -14,7 +14,7 @@ export default function GetBalanceScreen() {
     isLoading, 
     error,
     refetch 
-  } = useBalancesForWallet(0, tokenConfigs);
+  } = useBalancesForWallet(0, []);
 
   const { mutate: refreshBalance, isPending: isRefreshing } = useRefreshBalance();
 
@@ -26,10 +26,10 @@ export default function GetBalanceScreen() {
       const netConfig = tokenConfigs[b.network];
       
       if (netConfig) {
-        if (!b.tokenAddress) {
+        if (!b.assetId) {
           symbol = netConfig.native?.symbol || 'Native';
         } else {
-          const t = netConfig.tokens?.find((t: any) => t.address.toLowerCase() === b.tokenAddress?.toLowerCase());
+          const t = netConfig.tokens?.find((t: any) => t.address.toLowerCase() === b.assetId?.toLowerCase());
           if (t) symbol = t.symbol;
         }
       }
@@ -38,7 +38,7 @@ export default function GetBalanceScreen() {
         network: b.network,
         symbol,
         balance: b.balance,
-        tokenAddress: b.tokenAddress
+        tokenAddress: b.assetId
       };
     });
   }, [balancesData]);
@@ -90,7 +90,7 @@ export default function GetBalanceScreen() {
           refreshBalance({
             network,
             accountIndex: 0,
-            tokenAddress: tokenAddress || null,
+            assetId: tokenAddress || null,
             type: tokenAddress ? 'token' : 'network'
           });
           return { status: 'Refetch triggered' };

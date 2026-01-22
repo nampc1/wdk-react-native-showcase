@@ -11,7 +11,7 @@
   "author": "Tether",
   "license": "Apache-2.0",
   "dependencies": {
-    "@tetherto/pear-wrk-wdk": "github:nampc1/pear-wrk-wdk-v2-fork#nampc/dynamic-worklet",
+    "@tetherto/wdk-react-native-core": "github:nampc1/wdk-react-native-core-fork#nampc/dev",
     "@tetherto/wdk-uikit-react-native": "^1.0.0-beta.2",
     "expo": "^54.0.10",
     "expo-build-properties": "^1.0.9",
@@ -31,11 +31,16 @@
     "sonner-native": "^0.21.1"
   },
   "devDependencies": {
+    "@tetherto/wdk": "^1.0.0-beta.5",
+    "@tetherto/wdk-wallet-evm": "^1.0.0-beta.4",
     "@tetherto/wdk-worklet-bundler": "github:nampc1/wdk-worklet-bundler-fork#nampc/dynamic-bundle",
     "@types/react": "~19.1.10",
     "babel-plugin-module-resolver": "^5.0.2",
+    "bare-node-runtime": "^1.1.4",
+    "bufferutil": "^4.1.0",
     "prettier": "^3.3.3",
     "prettier-config-standard": "^7.0.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "utf-8-validate": "^5.0.10"
   }
 }
