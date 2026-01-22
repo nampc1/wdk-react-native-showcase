@@ -1,70 +1,45 @@
-# WDK React Native Showcase
+# WDK React Native Worklet Showcase
 
-This repository serves as a showcase for the **Wallet Development Kit (WDK)** features, demonstrating how to integrate wallet functionality into a React Native application using minimal and reusable UI components.
+This project demonstrates the integration of the Wallet Development Kit (WDK) with React Native, specifically focusing on the dynamic bundling capabilities of the `wdk-worklet-bundler`.
 
 ## Overview
 
-The application provides a reference implementation for common wallet operations, utilizing `@tetherto/wdk-react-native-core` and `@tetherto/wdk-uikit-react-native`. It is designed to be a starting point or reference for developers building crypto-enabled mobile applications.
-
-## Key Features
-
-The showcase demonstrates the following core capabilities:
-
-- **Wallet Configuration**: Setup and configuration of the WDK environment.
-- **Account Management**: 
-  - Get Account details
-  - Manage Account
-  - Get Balance
-- **Transactions**:
-  - Send Funds
-  - Sign Messages
-
-## Project Structure
-
-The project is built with Expo and follows a modular structure:
-
-- `src/app/features/`: Contains the core feature implementations (Wallet, Config).
-- `src/components/`: Reusable UI components used throughout the showcase.
-- `src/config/`: Configuration for chains and tokens.
+The core thesis of this project is to validate dynamic bundle generation. The goal is to allow developers to specify exactly which WDK modules (e.g., specific wallets, protocols) they need. The bundler then wraps all necessary dependencies into a single, optimized bundle that runs on a separate worklet thread, communicating via HRPC.
 
 ## Getting Started
 
-### Prerequisites
+### 1. Install Dependencies
 
-- Node.js
-- npm or yarn
+Install the project dependencies using npm:
 
-### Installation
+```bash
+npm install
+```
 
-1. Install dependencies:
+### 2. Generate the Worklet Bundle
 
-   ```sh
-   npm install
-   ```
+Run the bundler to generate the worklet entry point and bundle file. The `--keep-artifacts` flag allows inspection of the generated source.
 
-### Running the App
+```bash
+npx wdk-worklet-bundler generate --keep-artifacts --verbose
+```
 
-You can run the application on Android or iOS simulators, or physical devices.
+This process will:
+- Read your WDK configuration.
+- Generate the source entry file at `.wdk/wdk-worklet.generated.js`.
+- Bundle dependencies into a format ready for the Bare runtime.
 
-**Android:**
+### 3. Run on Android
 
-```sh
+Build and launch the application on an Android emulator or device:
+
+```bash
 npm run android
 ```
 
-**iOS:**
+## Project Structure
 
-```sh
-npm run ios
-```
-
-## Dependencies
-
-Key WDK dependencies included in this project:
-
-- `@tetherto/wdk-react-native-core`
-- `@tetherto/wdk-uikit-react-native`
-
-## License
-
-Apache-2.0
+- **`.wdk/`**: Contains the generated artifacts.
+  - `wdk-worklet.generated.js`: The auto-generated source file for the bundle. It imports the necessary WDK functions and registers HRPC handlers based on your configuration.
+- **`wdk.config.js`**: Configuration file defining which WDK modules to include.
+- **`src/`**: The React Native application source code.

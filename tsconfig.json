@@ -7,7 +7,7 @@
     "jsx": "react-native",
     "paths": {
       "@/*": ["src/*"],
-      ".wdk": [".wdk-bundle/wdk-worklet.bundle.js"]
+      ".wdk-bundle": [".wdk-bundle/wdk-worklet.bundle.js"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"]
