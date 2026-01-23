@@ -10,8 +10,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { Toaster } from 'sonner-native';
 import { colors } from '../constants/colors';
-import chainConfigs from '../config/chain';
-import bundle from '.wdk';
+import wdkConfigs from '../config/chain';
+import bundle from '.wdk-bundle';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -37,10 +37,9 @@ const SplashHandler = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default function RootLayout() {
-  console.log(bundle.slice(0,100))
   return (
     <WdkAppProvider
-      networkConfigs={chainConfigs}
+      wdkConfigs={wdkConfigs}
       bundle={{ bundle }}
     >
       <SplashHandler>

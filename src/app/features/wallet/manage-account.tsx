@@ -5,7 +5,6 @@ import { ActionCard } from '@/components/ActionCard';
 import { FeatureLayout } from '@/components/FeatureLayout';
 import { ConsoleOutput } from '@/components/ConsoleOutput';
 import { colors } from '@/constants/colors';
-import chainConfigs from '@/config/chain';
 
 export default function ManageAccountScreen() {
   const { 
@@ -17,7 +16,7 @@ export default function ManageAccountScreen() {
     getMnemonic,
     wallets,
     activeWalletId
-  } = useWalletManager(undefined, chainConfigs);
+  } = useWalletManager();
 
   return (
     <FeatureLayout 
@@ -39,7 +38,7 @@ export default function ManageAccountScreen() {
           { id: 'walletId', type: 'text', label: 'Wallet ID (Email)', placeholder: 'user@example.com' }
         ]}
         action={async ({ walletId }) => {
-          await createWallet(walletId, chainConfigs);
+          await createWallet(walletId);
           return { success: true, message: `Wallet ${walletId} created` };
         }}
         actionLabel="Create Wallet"
@@ -86,10 +85,15 @@ export default function ManageAccountScreen() {
 
       <ActionCard
         title="Reveal Mnemonic"
-        description="Decrypt and show the seed phrase for the active wallet."
-        fields={[]}
-        action={async () => {
-          const phrase = await getMnemonic();
+        description="Decrypt and show the seed phrase for a wallet."
+        fields={[
+          { id: 'walletId', type: 'text', label: 'Wallet ID', placeholder: 'user@example.com (Optional if active)' }
+        ]}
+        action={async ({ walletId }) => {
+          // If walletId is empty string (default from form), pass undefined to let hook use active wallet if supported,
+          // or rely on user input. The hook signature usually requires it if not implicit.
+          // Based on user request "getMnemonic requires a walletId", we pass it.
+          const phrase = await getMnemonic(walletId || undefined);
           return { mnemonic: phrase };
         }}
         actionLabel="Reveal Phrase"

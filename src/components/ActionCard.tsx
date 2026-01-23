@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, TextInput, TouchableOpacity, ActivityIndicator 
 import { colors } from '@/constants/colors';
 import { ConsoleOutput } from './ConsoleOutput';
 import { ChainSelector } from './ChainSelector';
-import chainConfigs from '@/config/chain';
+import wdkConfigs from '@/config/chain';
 
 export interface ActionField {
   id: string;
@@ -33,7 +33,7 @@ export const ActionCard: React.FC<Props> = ({
     const initial: Record<string, any> = {};
     fields.forEach(f => {
       if (f.defaultValue !== undefined) initial[f.id] = f.defaultValue;
-      else if (f.type === 'chain') initial[f.id] = Object.keys(chainConfigs)[0];
+      else if (f.type === 'chain') initial[f.id] = Object.keys(wdkConfigs)[0];
       else initial[f.id] = '';
     });
     return initial;

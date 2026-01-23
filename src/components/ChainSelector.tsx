@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, View, Text, Modal, TouchableOpacity, FlatList } from 'react-native';
 import { ChevronDown, X, Check } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
-import chainConfigs from '@/config/chain';
+import wdkConfigs from '@/config/chain';
 
 interface Props {
   selectedChain: string;
@@ -12,7 +12,7 @@ interface Props {
 
 export const ChainSelector: React.FC<Props> = ({ selectedChain, onSelectChain, label = "Network" }) => {
   const [modalVisible, setModalVisible] = useState(false);
-  const chains = Object.keys(chainConfigs);
+  const chains = Object.keys(wdkConfigs.networks);
 
   const handleSelect = (chain: string) => {
     onSelectChain(chain);

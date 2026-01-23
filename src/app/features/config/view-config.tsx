@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { FeatureLayout } from '@/components/FeatureLayout';
 import { ConsoleOutput } from '@/components/ConsoleOutput';
 import { colors } from '@/constants/colors';
-import chainConfigs from '@/config/chain';
+import wdkConfigs from '@/config/chain';
 import { tokenConfigs } from '@/config/token';
 import { ChevronDown, ChevronUp, Network, Coins, Database } from 'lucide-react-native';
 
@@ -103,7 +103,7 @@ export default function ViewConfigScreen() {
       </View>
 
       <View style={styles.list}>
-        {Object.entries(chainConfigs).map(([key, chainConfig]: [string, any]) => {
+        {Object.entries(wdkConfigs).map(([key, chainConfig]: [string, any]) => {
           // @ts-ignore
           const tokenConfig = tokenConfigs[key];
           

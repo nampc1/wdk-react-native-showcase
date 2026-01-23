@@ -6,42 +6,36 @@ import { FeatureLayout } from '@/components/FeatureLayout';
 import { ConsoleOutput } from '@/components/ConsoleOutput';
 import { colors } from '@/constants/colors';
 import { tokenConfigs } from '@/config/token';
+import { AppAsset } from '@/entities/AppAsset';
 import { RefreshCw } from 'lucide-react-native';
 
 export default function GetBalanceScreen() {
+  // Convert config to IAsset instances
+  const assets = useMemo(() => AppAsset.fromConfigs(tokenConfigs), []);
+
   const { 
     data: balancesData, 
     isLoading, 
     error,
     refetch 
-  } = useBalancesForWallet(0, []);
+  } = useBalancesForWallet(0, assets);
 
   const { mutate: refreshBalance, isPending: isRefreshing } = useRefreshBalance();
 
   const formattedBalances = useMemo(() => {
     if (!balancesData) return [];
     return balancesData.map(b => {
-      let symbol = 'Unknown';
-      // @ts-ignore - Index signature mismatch potential
-      const netConfig = tokenConfigs[b.network];
+      // Find the asset definition to get metadata like symbol
+      const asset = assets.find(a => a.getId() === b.assetId);
       
-      if (netConfig) {
-        if (!b.assetId) {
-          symbol = netConfig.native?.symbol || 'Native';
-        } else {
-          const t = netConfig.tokens?.find((t: any) => t.address.toLowerCase() === b.assetId?.toLowerCase());
-          if (t) symbol = t.symbol;
-        }
-      }
-
       return {
         network: b.network,
-        symbol,
+        symbol: asset?.getSymbol() || 'Unknown',
         balance: b.balance,
-        tokenAddress: b.assetId
+        assetId: b.assetId
       };
     });
-  }, [balancesData]);
+  }, [balancesData, assets]);
 
   return (
     <FeatureLayout 
@@ -84,14 +78,14 @@ export default function GetBalanceScreen() {
         description="Invalidate cache and fetch fresh balance for a specific token."
         fields={[
           { id: 'network', type: 'chain', label: 'Select Network' },
-          { id: 'tokenAddress', type: 'text', label: 'Token Address (Optional)', placeholder: 'Leave empty for native' }
+          { id: 'assetId', type: 'text', label: 'Asset ID (Optional)', placeholder: 'e.g. ethereum-native' }
         ]}
-        action={async ({ network, tokenAddress }) => {
+        action={async ({ network, assetId }) => {
           refreshBalance({
             network,
             accountIndex: 0,
-            assetId: tokenAddress || null,
-            type: tokenAddress ? 'token' : 'network'
+            assetId: assetId || undefined,
+            type: assetId ? 'token' : 'network'
           });
           return { status: 'Refetch triggered' };
         }}
