@@ -9,14 +9,23 @@ import { colors } from '@/constants/colors';
 export default function ManageAccountScreen() {
   const { 
     createWallet,
-    initializeWallet, 
-    initializeFromMnemonic,
-    createTemporaryWallet,
     deleteWallet,
     getMnemonic,
     wallets,
-    activeWalletId
+    activeWalletId,
+    status,
+    unlock,
+    restoreWallet,
+    createTemporaryWallet,
+    lock,
+    generateMnemonic,
+    clearTemporaryWallet,
+    clearCache,
+    setActiveWalletId,
+    refreshWalletList,
   } = useWalletManager();
+
+  console.log('Available Wallets Info:', JSON.stringify(wallets, null, 2));
 
   return (
     <FeatureLayout 
@@ -26,10 +35,22 @@ export default function ManageAccountScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Current Wallet Status</Text>
         <ConsoleOutput data={{ 
+          status,
           activeWalletId: activeWalletId || 'None',
           availableWallets: wallets
         }} />
       </View>
+
+      <ActionCard
+        title="Refresh Wallet List"
+        description="Manually refreshes the list of available wallets."
+        fields={[]}
+        action={async () => {
+          await refreshWalletList();
+          return { success: true, message: "Wallet list refreshed" };
+        }}
+        actionLabel="Refresh"
+      />
 
       <ActionCard
         title="Create New Wallet"
@@ -51,11 +72,24 @@ export default function ManageAccountScreen() {
           { id: 'walletId', type: 'text', label: 'Wallet ID', placeholder: 'user@example.com' }
         ]}
         action={async ({ walletId }) => {
-          // initializeWallet({ createNew: false, walletId }) loads it.
-          await initializeWallet({ createNew: false, walletId });
+          // New method to unlock/switch wallet
+          await unlock(walletId);
           return { success: true, message: `Loaded wallet ${walletId}` };
         }}
         actionLabel="Load Wallet"
+      />
+
+      <ActionCard
+        title="Set Active Wallet"
+        description="Switch the active wallet ID without unlocking."
+        fields={[
+          { id: 'walletId', type: 'text', label: 'Wallet ID', placeholder: 'user@example.com' }
+        ]}
+        action={async ({ walletId }) => {
+          setActiveWalletId(walletId);
+          return { success: true, message: `Active wallet set to ${walletId}` };
+        }}
+        actionLabel="Set Active"
       />
 
       <ActionCard
@@ -66,10 +100,21 @@ export default function ManageAccountScreen() {
           { id: 'mnemonic', type: 'json', label: 'Seed Phrase', placeholder: 'word1 word2 ... word12' }
         ]}
         action={async ({ walletId, mnemonic }) => {
-          await initializeFromMnemonic(mnemonic, walletId);
+          await restoreWallet(mnemonic, walletId);
           return { success: true, message: `Wallet ${walletId} imported` };
         }}
         actionLabel="Import Wallet"
+      />
+
+      <ActionCard
+        title="Generate Mnemonic"
+        description="Generates a new seed phrase."
+        fields={[]}
+        action={async () => {
+          const phrase = await generateMnemonic();
+          return { mnemonic: phrase };
+        }}
+        actionLabel="Generate"
       />
 
       <ActionCard
@@ -84,19 +129,53 @@ export default function ManageAccountScreen() {
       />
 
       <ActionCard
+        title="Clear Temporary Wallet"
+        description="Clears the temporary wallet session from memory."
+        fields={[]}
+        action={async () => {
+          clearTemporaryWallet();
+          return { success: true, message: "Temporary wallet cleared" };
+        }}
+        actionLabel="Clear"
+      />
+
+      <ActionCard
         title="Reveal Mnemonic"
         description="Decrypt and show the seed phrase for a wallet."
         fields={[
           { id: 'walletId', type: 'text', label: 'Wallet ID', placeholder: 'user@example.com (Optional if active)' }
         ]}
         action={async ({ walletId }) => {
-          // If walletId is empty string (default from form), pass undefined to let hook use active wallet if supported,
-          // or rely on user input. The hook signature usually requires it if not implicit.
-          // Based on user request "getMnemonic requires a walletId", we pass it.
-          const phrase = await getMnemonic(walletId || undefined);
+          const targetWalletId = walletId || activeWalletId;
+          if (!targetWalletId) {
+            return { error: 'Please specify a Wallet ID or have an active wallet selected.' };
+          }
+          const phrase = await getMnemonic(targetWalletId);
           return { mnemonic: phrase };
         }}
         actionLabel="Reveal Phrase"
+      />
+
+      <ActionCard
+        title="Lock Wallet"
+        description="Locks the active wallet, clearing sensitive data from memory."
+        fields={[]}
+        action={async () => {
+          lock();
+          return { success: true, message: "Wallet locked" };
+        }}
+        actionLabel="Lock"
+      />
+
+      <ActionCard
+        title="Clear Cache"
+        description="Clears the wallet cache."
+        fields={[]}
+        action={async () => {
+          clearCache();
+          return { success: true, message: "Cache cleared" };
+        }}
+        actionLabel="Clear Cache"
       />
 
       <ActionCard
