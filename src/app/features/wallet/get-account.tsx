@@ -1,61 +1,143 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useWallet } from '@tetherto/wdk-react-native-core';
+import { useAccount } from '@tetherto/wdk-react-native-core';
+import type { UseAccountParams } from '@tetherto/wdk-react-native-core';
 import { ActionCard } from '@/components/ActionCard';
 import { FeatureLayout } from '@/components/FeatureLayout';
 import { ConsoleOutput } from '@/components/ConsoleOutput';
 import { colors } from '@/constants/colors';
+import { tokenMap, tokens } from '@/config/token';
 
-export default function GetAccountScreen() {
-  const { addresses, getNetworkAddresses, getAddress } = useWallet();
+// This component is now an interactive control panel for a specific account.
+function AccountInfo({ network, accountIndex }: UseAccountParams) {
+  const account = useAccount({ network, accountIndex });
 
-  return (
-    <FeatureLayout
-      title="Wallet Addresses"
-      description="Inspect cached addresses and derive new ones on-demand."
-    >
+  // Filter tokens from the global config that are compatible with the current account's network
+  const compatibleTokens = tokens.filter(t => t.getNetwork() === network);
+  const tokenOptions = compatibleTokens.map(t => ({ label: t.getSymbol(), value: t.getId() }));
+
+  // Handle loading/inactive wallet state
+  if (!account) {
+    return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Cached Addresses Map</Text>
-        <Text style={styles.sectionSubtitle}>All addresses derived and cached in memory. Note: You must derive an address first.</Text>
-        <ConsoleOutput data={addresses} />
+        <Text style={styles.sectionTitle}>Account Unavailable</Text>
+        <Text style={styles.sectionSubtitle}>
+          Could not load account for "{network}" at index {accountIndex}. The wallet may be locked or not initialized.
+        </Text>
+        <ConsoleOutput data={{ network, accountIndex, error: "useAccount returned null" }} />
+      </View>
+    );
+  }
+
+  // If account is loaded, show details and actions
+  return (
+    <>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Account Details</Text>
+        <Text style={styles.sectionSubtitle}>
+          Derived from network "{network}" at index {accountIndex}
+        </Text>
+        <ConsoleOutput data={{
+          address: account.address,
+          account: account.account
+        }} />
       </View>
 
       <ActionCard
-        title="Get Network Addresses"
-        description="Retrieve all cached addresses for a specific network."
+        title="Get Balance"
+        description="Fetches balance for a selected asset."
         fields={[
-          { id: 'network', type: 'chain', label: 'Select Network' }
+          { id: 'tokenId', type: 'select', label: 'Select Asset', options: tokenOptions }
         ]}
-        action={async ({ network }) => {
-          return getNetworkAddresses(network);
+        action={async ({ tokenId }) => {
+          const asset = tokenMap.get(tokenId);
+          if (!asset) throw new Error(`Asset with id ${tokenId} not found`);
+          // getBalance expects an array of assets
+          const balances = await account.getBalance([asset]);
+          return balances;
         }}
-        actionLabel="Fetch Map"
+        actionLabel="Get Balance"
       />
 
-      {/* 3. Get Specific Address */}
       <ActionCard
-        title="Derive Address"
-        description="Derive a specific address index."
+        title="Send Transaction"
+        description="Executes a transfer of any asset."
+        fields={[
+          { id: 'to', type: 'text', label: 'Recipient Address', placeholder: '0x...' },
+          { id: 'amount', type: 'text', label: 'Amount (in smallest unit)', placeholder: '1000000' },
+          { id: 'assetId', type: 'select', label: 'Asset to Send', options: tokenOptions },
+        ]}
+        action={async ({ to, amount, assetId }) => {
+          const asset = tokenMap.get(assetId);
+          if (!asset) throw new Error(`Asset with id ${assetId} not found`);
+
+          const result = await account.send({ to, amount, asset });
+          return result;
+        }}
+        actionLabel="Send"
+      />
+
+      <ActionCard
+        title="Sign Message"
+        description="Signs a UTF-8 message with the account's private key."
+        fields={[
+          { id: 'message', type: 'text', label: 'Message to Sign', placeholder: 'Hello, world!' }
+        ]}
+        action={async ({ message }) => {
+          const signature = await account.sign(message);
+          return { signature };
+        }}
+        actionLabel="Sign"
+      />
+      
+      <ActionCard
+        title="Verify Signature"
+        description="Verifies a signature against a message."
+        fields={[
+          { id: 'message', type: 'text', label: 'Original Message' },
+          { id: 'signature', type: 'text', label: 'Signature' },
+        ]}
+        action={async ({ message, signature }) => {
+          const isValid = await account.verify(message, signature);
+          return { isValid };
+        }}
+        actionLabel="Verify"
+      />
+    </>
+  );
+}
+
+
+export default function GetAccountScreen() {
+  const [lookupParams, setLookupParams] = useState<UseAccountParams | null>(null);
+
+  return (
+    <FeatureLayout
+      title="Wallet Account Lookup"
+      description="Look up a specific account by network and index to interact with it."
+    >
+      <ActionCard
+        title="Find Account"
+        description="Provide a network and account index to derive a specific account."
         fields={[
           { id: 'network', type: 'chain', label: 'Select Network' },
           { id: 'index', type: 'number', label: 'Account Index', defaultValue: '0' }
         ]}
         action={async ({ network, index }) => {
-          const addr = await getAddress(network, parseInt(index));
-          return {
-            network,
-            index,
-            address: addr
-          };
+          setLookupParams({ network, accountIndex: parseInt(index, 10) });
+          return { success: `Displaying controls for network: ${network}, index: ${index}` };
         }}
-        actionLabel="Get Address"
+        actionLabel="Look up Account"
       />
+
+      {lookupParams && <AccountInfo {...lookupParams} />}
     </FeatureLayout>
   );
 }
 
 const styles = StyleSheet.create({
   section: {
+    marginTop: 24,
     marginBottom: 24,
   },
   sectionTitle: {

@@ -1,7 +1,11 @@
-import type { AssetConfig } from '@tetherto/wdk-react-native-core'
+import { AppAsset } from '@/entities/AppAsset';
+import type { AppAssetConfig } from '@/entities/AppAsset';
 
-export const tokenConfigs: AssetConfig[] = [
-  // Ethereum Native
+/**
+ * Main Application Asset Configurations
+ * This list is used to instantiate AppAsset objects that are used throughout the app.
+ */
+export const tokenAssetConfigs: AppAssetConfig[] = [
   {
     id: 'ethereum-native',
     network: 'ethereum',
@@ -9,9 +13,9 @@ export const tokenConfigs: AssetConfig[] = [
     address: null,
     symbol: 'ETH',
     name: 'Ethereum',
-    decimals: 18
+    decimals: 18,
+    logo: require('@/assets/images/chains/ethereum-eth-logo.png')
   },
-  // Ethereum Tokens
   {
     id: 'ethereum-usdt',
     network: 'ethereum',
@@ -19,7 +23,8 @@ export const tokenConfigs: AssetConfig[] = [
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
     symbol: 'USDT',
     name: 'Tether USD',
-    decimals: 6
+    decimals: 6,
+    logo: require('@/assets/images/tokens/tether-usdt-logo.png')
   },
   {
     id: 'ethereum-xaut',
@@ -28,7 +33,8 @@ export const tokenConfigs: AssetConfig[] = [
     address: '0x68749665FF8D2d112Fa859AA293F07A622782F38',
     symbol: 'XAUT',
     name: 'Tether Gold',
-    decimals: 6
+    decimals: 6,
+    logo: require('@/assets/images/tokens/tether-xaut-logo.png')
   },
   {
     id: 'ethereum-usat',
@@ -39,4 +45,18 @@ export const tokenConfigs: AssetConfig[] = [
     name: 'Tether USAT',
     decimals: 6
   }
-]
+];
+
+/**
+ * Export instantiated asset objects for use in the application.
+ * This is the primary way components should access asset data.
+ */
+export const tokens: AppAsset[] = AppAsset.fromConfigs(tokenAssetConfigs);
+
+/**
+ * Export a map for easy asset lookup by their unique ID.
+ * e.g. tokenMap.get('ethereum-usdt')
+ */
+export const tokenMap: Map<string, AppAsset> = new Map(
+  tokens.map(t => [t.getId(), t])
+);

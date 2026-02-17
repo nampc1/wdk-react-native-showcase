@@ -22,10 +22,8 @@ export default function ManageAccountScreen() {
     clearTemporaryWallet,
     clearCache,
     setActiveWalletId,
-    refreshWalletList,
+    refreshWalletList
   } = useWalletManager();
-
-  console.log('Available Wallets Info:', JSON.stringify(wallets, null, 2));
 
   return (
     <FeatureLayout 
@@ -66,13 +64,12 @@ export default function ManageAccountScreen() {
       />
 
       <ActionCard
-        title="Load Existing Wallet"
-        description="Switch to an existing wallet by ID (requires biometrics)."
+        title="Unlock Active Wallet"
+        description="Unlock the current active wallet (requires biometrics)"
         fields={[
           { id: 'walletId', type: 'text', label: 'Wallet ID', placeholder: 'user@example.com' }
         ]}
         action={async ({ walletId }) => {
-          // New method to unlock/switch wallet
           await unlock(walletId);
           return { success: true, message: `Loaded wallet ${walletId}` };
         }}

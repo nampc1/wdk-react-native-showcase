@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { colors } from '@/constants/colors';
 import { ConsoleOutput } from './ConsoleOutput';
 import { ChainSelector } from './ChainSelector';
@@ -8,9 +8,10 @@ import wdkConfigs from '@/config/chain';
 export interface ActionField {
   id: string;
   label?: string;
-  type: 'text' | 'number' | 'chain' | 'json';
+  type: 'text' | 'number' | 'chain' | 'json' | 'select';
   placeholder?: string;
   defaultValue?: any;
+  options?: Array<{ label: string; value: any }>;
 }
 
 interface Props {
@@ -32,9 +33,15 @@ export const ActionCard: React.FC<Props> = ({
   const [formValues, setFormValues] = useState<Record<string, any>>(() => {
     const initial: Record<string, any> = {};
     fields.forEach(f => {
-      if (f.defaultValue !== undefined) initial[f.id] = f.defaultValue;
-      else if (f.type === 'chain') initial[f.id] = Object.keys(wdkConfigs)[0];
-      else initial[f.id] = '';
+      if (f.defaultValue !== undefined) {
+        initial[f.id] = f.defaultValue;
+      } else if (f.type === 'chain') {
+        initial[f.id] = Object.keys(wdkConfigs)[0];
+      } else if (f.type === 'select') {
+        initial[f.id] = f.options?.[0]?.value;
+      } else {
+        initial[f.id] = '';
+      }
     });
     return initial;
   });
@@ -48,19 +55,7 @@ export const ActionCard: React.FC<Props> = ({
     setResult(null);
     setError(null);
     try {
-      // Process values (e.g. parse JSON)
-      const processedValues = { ...formValues };
-      fields.forEach(f => {
-        if (f.type === 'json' && typeof formValues[f.id] === 'string') {
-          try {
-            processedValues[f.id] = JSON.parse(formValues[f.id]);
-          } catch (e) {
-            // Keep as string if parse fails, logic might handle it
-          }
-        }
-      });
-
-      const res = await action(processedValues);
+      const res = await action(formValues);
       setResult(res);
     } catch (e: any) {
       setError(e.message || e);
@@ -93,6 +88,31 @@ export const ActionCard: React.FC<Props> = ({
             );
           }
 
+          if (field.type === 'select') {
+            return (
+              <View key={field.id} style={styles.fieldContainer}>
+                <Text style={styles.label}>{field.label || field.id}</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selectScrollView}>
+                  {field.options?.map(option => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[
+                        styles.selectButton,
+                        formValues[field.id] === option.value && styles.selectButtonSelected
+                      ]}
+                      onPress={() => updateField(field.id, option.value)}
+                    >
+                      <Text style={[
+                        styles.selectButtonText,
+                        formValues[field.id] === option.value && styles.selectButtonTextSelected
+                      ]}>{option.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            );
+          }
+
           return (
             <View key={field.id} style={styles.fieldContainer}>
               <Text style={styles.label}>{field.label || field.id}</Text>
@@ -101,7 +121,7 @@ export const ActionCard: React.FC<Props> = ({
                   styles.input, 
                   field.type === 'json' && styles.textArea
                 ]}
-                value={formValues[field.id]}
+                value={String(formValues[field.id] ?? '')}
                 onChangeText={(text) => updateField(field.id, text)}
                 placeholder={field.placeholder}
                 placeholderTextColor={colors.textSecondary}
@@ -178,6 +198,7 @@ const styles = StyleSheet.create({
     padding: 16,
     color: colors.text,
     fontSize: 16,
+    minHeight: 54,
   },
   textArea: {
     height: 100,
@@ -194,5 +215,31 @@ const styles = StyleSheet.create({
     color: colors.black,
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  selectScrollView: {
+    flexDirection: 'row',
+  },
+  selectButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginRight: 10,
+    height: 42,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  selectButtonSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  selectButtonText: {
+    color: colors.text,
+    fontWeight: '500',
+  },
+  selectButtonTextSelected: {
+    color: colors.black,
   },
 });
