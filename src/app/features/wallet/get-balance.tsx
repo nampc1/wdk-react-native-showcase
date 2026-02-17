@@ -1,56 +1,70 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { useBalancesForWallet, useRefreshBalance } from '@tetherto/wdk-react-native-core';
-import { ActionCard } from '@/components/ActionCard';
+import { StyleSheet, View, Text, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native';
+import { useBalance, useRefreshBalance } from '@tetherto/wdk-react-native-core';
 import { FeatureLayout } from '@/components/FeatureLayout';
 import { ConsoleOutput } from '@/components/ConsoleOutput';
 import { colors } from '@/constants/colors';
-import { tokenConfigs } from '@/config/token';
-import { AppAsset } from '@/entities/AppAsset';
+import { tokens } from '@/config/token';
+import type { AppAsset } from '@/entities/AppAsset';
 import { RefreshCw } from 'lucide-react-native';
 
+// A dedicated component to display the balance for a single asset.
+// It uses the useBalance hook to fetch and manage its own state.
+const BalanceRow = ({ asset, accountIndex }: { asset: AppAsset, accountIndex: number }) => {
+  const { data: balanceData, isLoading, error, refetch } = useBalance(
+    asset.getNetwork(),
+    accountIndex,
+    asset,
+    {
+      // Example: set a stale time of 30 seconds for each balance query
+      staleTime: 30 * 1000,
+    }
+  );
+
+  const displayBalance = useMemo(() => {
+    if (isLoading) return 'Loading...';
+    if (error) return 'Error';
+    if (!balanceData?.success) return 'Failed';
+    // A simple formatter could be used here in a real app
+    return balanceData.balance;
+  }, [balanceData, isLoading, error]);
+
+  return (
+    <View style={styles.row}>
+      <View style={styles.assetInfo}>
+        <Text style={styles.assetSymbol}>{asset.getSymbol()}</Text>
+        <Text style={styles.assetName}>{asset.getName()}</Text>
+      </View>
+      <View style={styles.balanceInfo}>
+        <Text style={styles.balanceText}>{displayBalance}</Text>
+        {error && <ConsoleOutput data={error.message} error />}
+      </View>
+      <TouchableOpacity onPress={() => refetch()} disabled={isLoading} style={styles.refreshButton}>
+        {isLoading ? <ActivityIndicator size="small" color={colors.primary} /> : <RefreshCw size={18} color={colors.textSecondary} />}
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+
 export default function GetBalanceScreen() {
-  // Convert config to IAsset instances
-  const assets = useMemo(() => AppAsset.fromConfigs(tokenConfigs), []);
+  const accountIndex = 0; // Assuming a single account for now
+  const { mutate: refreshAllBalances, isPending: isRefreshingAll } = useRefreshBalance();
 
-  const { 
-    data: balancesData, 
-    isLoading, 
-    error,
-    refetch 
-  } = useBalancesForWallet(0, assets);
-
-  const { mutate: refreshBalance, isPending: isRefreshing } = useRefreshBalance();
-
-  const formattedBalances = useMemo(() => {
-    if (!balancesData) return [];
-    return balancesData.map(b => {
-      // Find the asset definition to get metadata like symbol
-      const asset = assets.find(a => a.getId() === b.assetId);
-      
-      return {
-        network: b.network,
-        symbol: asset?.getSymbol() || 'Unknown',
-        balance: b.balance,
-        assetId: b.assetId
-      };
-    });
-  }, [balancesData, assets]);
+  const handleRefreshAll = () => {
+    refreshAllBalances({ accountIndex, type: 'wallet' });
+  };
 
   return (
     <FeatureLayout 
       title="Wallet Balances" 
-      description="Fetch and monitor asset balances across networks."
+      description="Fetch and monitor asset balances. Each asset is managed by its own query."
     >
       <View style={styles.card}>
         <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle}>Balance Query</Text>
-          <TouchableOpacity 
-            onPress={() => refetch()} 
-            disabled={isLoading || isRefreshing}
-            style={styles.refreshButton}
-          >
-            {isLoading || isRefreshing ? (
+          <Text style={styles.cardTitle}>All Asset Balances</Text>
+          <TouchableOpacity onPress={handleRefreshAll} disabled={isRefreshingAll} style={styles.refreshButton}>
+            {isRefreshingAll ? (
                <ActivityIndicator size="small" color={colors.primary} />
             ) : (
                <RefreshCw size={20} color={colors.primary} />
@@ -58,39 +72,15 @@ export default function GetBalanceScreen() {
           </TouchableOpacity>
         </View>
         <Text style={styles.cardDesc}>
-          Balances are cached and updated via TanStack Query.
+          Using `useBalance` for each asset. Press the master refresh button to refetch all.
         </Text>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Raw Balance Data</Text>
-        {isLoading ? (
-          <ActivityIndicator color={colors.primary} style={{ alignSelf: 'flex-start', margin: 20 }} />
-        ) : error ? (
-          <ConsoleOutput data={error.message} error />
-        ) : (
-          <ConsoleOutput data={formattedBalances.length > 0 ? formattedBalances : 'No data found'} />
-        )}
-      </View>
-
-      <ActionCard
-        title="Force Refresh Specific Asset"
-        description="Invalidate cache and fetch fresh balance for a specific token."
-        fields={[
-          { id: 'network', type: 'chain', label: 'Select Network' },
-          { id: 'assetId', type: 'text', label: 'Asset ID (Optional)', placeholder: 'e.g. ethereum-native' }
-        ]}
-        action={async ({ network, assetId }) => {
-          refreshBalance({
-            network,
-            accountIndex: 0,
-            assetId: assetId || undefined,
-            type: assetId ? 'token' : 'network'
-          });
-          return { status: 'Refetch triggered' };
-        }}
-        actionLabel="Refresh Asset"
-      />
+      <ScrollView>
+        {tokens.map(asset => (
+          <BalanceRow key={asset.getId()} asset={asset} accountIndex={accountIndex} />
+        ))}
+      </ScrollView>
     </FeatureLayout>
   );
 }
@@ -98,8 +88,8 @@ export default function GetBalanceScreen() {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 20,
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: 24,
@@ -111,7 +101,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: colors.text,
   },
@@ -120,15 +110,38 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   refreshButton: {
-    padding: 4,
+    padding: 8,
   },
-  section: {
-    marginBottom: 24,
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  sectionTitle: {
-    fontSize: 18,
+  assetInfo: {
+    flex: 1,
+  },
+  assetSymbol: {
+    fontSize: 16,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 8,
+  },
+  assetName: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  balanceInfo: {
+    flex: 2,
+    alignItems: 'flex-end',
+    marginRight: 12,
+  },
+  balanceText: {
+    fontSize: 16,
+    color: colors.text,
+    fontWeight: '500',
   },
 });

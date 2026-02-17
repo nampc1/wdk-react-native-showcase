@@ -8,15 +8,12 @@ import { ConsoleOutput } from '@/components/ConsoleOutput';
 import { colors } from '@/constants/colors';
 import { tokenMap, tokens } from '@/config/token';
 
-// This component is now an interactive control panel for a specific account.
 function AccountInfo({ network, accountIndex }: UseAccountParams) {
   const account = useAccount({ network, accountIndex });
 
-  // Filter tokens from the global config that are compatible with the current account's network
   const compatibleTokens = tokens.filter(t => t.getNetwork() === network);
   const tokenOptions = compatibleTokens.map(t => ({ label: t.getSymbol(), value: t.getId() }));
 
-  // Handle loading/inactive wallet state
   if (!account) {
     return (
       <View style={styles.section}>
@@ -29,7 +26,6 @@ function AccountInfo({ network, accountIndex }: UseAccountParams) {
     );
   }
 
-  // If account is loaded, show details and actions
   return (
     <>
       <View style={styles.section}>
