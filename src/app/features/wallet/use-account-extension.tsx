@@ -7,14 +7,18 @@ import { FeatureLayout } from '@/components/FeatureLayout';
 import { ConsoleOutput } from '@/components/ConsoleOutput';
 import { colors } from '@/constants/colors';
 import { tokenMap, tokens } from '@/config/token';
+import { NETWORK_NAME } from '@/config/chain';
+import { type WalletAccountBtc } from '@tetherto/wdk-wallet-btc';
 
-export default function GetAccountScreen() {
-  const [lookupParams, setLookupParams] = useState<UseAccountParams | null>(null);
+export default function AccountExtensionScreen() {
+  const [lookupParams] = useState<UseAccountParams>({ network: NETWORK_NAME.BITCOIN, accountIndex: 0 });
 
-  const account = useAccount({
-    network: lookupParams?.network ?? '',
-    accountIndex: lookupParams?.accountIndex ?? 0
+  const account = useAccount<WalletAccountBtc>({
+    network: lookupParams?.network,
+    accountIndex: lookupParams?.accountIndex
   });
+
+  const btcExtension = account?.extension();
 
   const compatibleTokens = lookupParams
     ? tokens.filter(t => t.getNetwork() === lookupParams.network)
@@ -26,20 +30,6 @@ export default function GetAccountScreen() {
       title="Wallet Account Lookup"
       description="Look up a specific account by network and index to interact with it."
     >
-      <ActionCard
-        title="Find Account"
-        description="Provide a network and account index to derive a specific account."
-        fields={[
-          { id: 'network', type: 'chain', label: 'Select Network' },
-          { id: 'index', type: 'number', label: 'Account Index', defaultValue: '0' }
-        ]}
-        action={async ({ network, index }) => {
-          setLookupParams({ network, accountIndex: parseInt(index, 10) });
-          return { success: `Displaying controls for network: ${network}, index: ${index}` };
-        }}
-        actionLabel="Look up Account"
-      />
-
       {lookupParams && (
         !account ? (
           <View style={styles.section}>
@@ -61,6 +51,45 @@ export default function GetAccountScreen() {
                 account: account.account
               }} />
             </View>
+
+            <ActionCard
+              title="Get Transfers (BTC Extension)"
+              description="Fetches the transaction history for this BTC account."
+              fields={[
+                {
+                  id: 'direction',
+                  type: 'select',
+                  label: 'Direction',
+                  options: [
+                    { label: 'All', value: 'all' },
+                    { label: 'Incoming', value: 'incoming' },
+                    { label: 'Outgoing', value: 'outgoing' },
+                  ],
+                  defaultValue: 'all',
+                },
+                { id: 'limit', type: 'number', label: 'Limit', defaultValue: '10' },
+                { id: 'skip', type: 'number', label: 'Skip', defaultValue: '0' },
+              ]}
+              action={async ({ direction, limit, skip }) => {
+                if (!btcExtension) {
+                  throw new Error('BTC extension is not available');
+                }
+                const transfers = await btcExtension.getTransfers({
+                  direction: direction as 'all' | 'incoming' | 'outgoing',
+                  limit: parseInt(limit, 10),
+                  skip: parseInt(skip, 10),
+                });
+                // The result has BigInts, which don't serialize in JSON.
+                // We need to convert them to strings for display.
+                const serializableTransfers = transfers.map(tx => ({
+                  ...tx,
+                  value: tx.value.toString(),
+                  fee: tx.fee?.toString(),
+                }));
+                return serializableTransfers;
+              }}
+              actionLabel="Get Transfers"
+            />
 
             <ActionCard
               title="Get Balance"

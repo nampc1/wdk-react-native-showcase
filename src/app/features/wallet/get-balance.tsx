@@ -8,8 +8,6 @@ import { tokens } from '@/config/token';
 import type { AppAsset } from '@/entities/AppAsset';
 import { RefreshCw } from 'lucide-react-native';
 
-// A dedicated component to display the balance for a single asset.
-// It uses the useBalance hook to fetch and manage its own state.
 const BalanceRow = ({ asset, accountIndex }: { asset: AppAsset, accountIndex: number }) => {
   const { data: balanceData, isLoading, error, refetch } = useBalance(
     asset.getNetwork(),

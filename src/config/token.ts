@@ -14,7 +14,7 @@ export const tokenAssetConfigs: AppAssetConfig[] = [
     symbol: 'ETH',
     name: 'Ethereum',
     decimals: 18,
-    logo: require('@/assets/images/chains/ethereum-eth-logo.png')
+    logo: require('../../assets/images/chains/ethereum-eth-logo.png')
   },
   {
     id: 'ethereum-usdt',
@@ -24,7 +24,7 @@ export const tokenAssetConfigs: AppAssetConfig[] = [
     symbol: 'USDT',
     name: 'Tether USD',
     decimals: 6,
-    logo: require('@/assets/images/tokens/tether-usdt-logo.png')
+    logo: require('../../assets/images/tokens/tether-usdt-logo.png')
   },
   {
     id: 'ethereum-xaut',
@@ -34,7 +34,7 @@ export const tokenAssetConfigs: AppAssetConfig[] = [
     symbol: 'XAUT',
     name: 'Tether Gold',
     decimals: 6,
-    logo: require('@/assets/images/tokens/tether-xaut-logo.png')
+    logo: require('../../assets/images/tokens/tether-xaut-logo.png')
   },
   {
     id: 'ethereum-usat',

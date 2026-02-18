@@ -81,11 +81,10 @@ export default function App() {
             title="Wallet Modules" 
             icon={<Wallet size={20} color={colors.primary} />}
           >
-            <FeatureItem title="Manage Accounts" route="/features/wallet/manage-account" />
-            <FeatureItem title="Get Address" route="/features/wallet/get-account" />
+            <FeatureItem title="Manage Wallets" route="/features/wallet/manage-account" />
+            <FeatureItem title="Common Account Interaction" route="/features/wallet/get-account" />
             <FeatureItem title="Get Balance" route="/features/wallet/get-balance" />
-            <FeatureItem title="Send Fund" route="/features/wallet/send-fund" />
-            <FeatureItem title="Sign & Verify" route="/features/wallet/sign-message" />
+            <FeatureItem title="Balance Hooks Demo" route="/features/wallet/balance-demo" />
           </FeatureGroup>
 
           <FeatureGroup 
