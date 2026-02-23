@@ -11,8 +11,8 @@ import 'react-native-reanimated';
 import { Toaster } from 'sonner-native';
 import { colors } from '../constants/colors';
 import wdkConfigs from '../config/chain';
-// import the generated bundle
-// import bundle from '.wdk-bundle';
+// @ts-ignore - generated worklet bundle
+import bundle from '../../.wdk-bundle/wdk-worklet.bundle.js';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -41,7 +41,7 @@ export default function RootLayout() {
   return (
     <WdkAppProvider
       wdkConfigs={wdkConfigs}
-      bundle={{ bundle: '' }} // add bundle here
+      bundle={{ bundle }}
     >
       <SplashHandler>
         <GestureHandlerRootView style={{ flex: 1 }}>
