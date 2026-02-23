@@ -2,8 +2,17 @@
 
 module.exports = {
   networks: {
-    ethereum: {
+    bitcoin: {
+      package: '@tetherto/wdk-wallet-btc'
+    },
+    spark: {
+      package: '@tetherto/wdk-wallet-spark'
+    },
+    sepolia: {
       package: '@tetherto/wdk-wallet-evm'
     }
-  }
-};
+  },
+  preloadModules: [
+    '@buildonspark/spark-frost-bare-addon'
+  ]
+}
