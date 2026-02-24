@@ -2,14 +2,14 @@
 
 module.exports = {
   networks: {
-    bitcoin: {
-      package: '@tetherto/wdk-wallet-btc'
-    },
+    // bitcoin: {
+    //   package: '@tetherto/wdk-wallet-btc'
+    // },
+    // sepolia: {
+    //   package: '@tetherto/wdk-wallet-evm'
+    // },
     spark: {
       package: '@tetherto/wdk-wallet-spark'
-    },
-    sepolia: {
-      package: '@tetherto/wdk-wallet-evm'
     }
   },
   preloadModules: [

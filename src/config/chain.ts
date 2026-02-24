@@ -5,20 +5,20 @@ import type { WdkConfigs } from '@tetherto/wdk-react-native-core'
 
 const wdkConfigs: WdkConfigs<EvmWalletConfig | BtcWalletConfig | SparkWalletConfig> = {
   networks: {
-    ethereum: {
-      blockchain: 'ethereum',
-      config: {
-        provider: 'https://ethereum-sepolia.gateway.tatum.io'
-      }
-    },
-    bitcoin: {
-      blockchain: 'bitcoin',
-      config: {
-        network: 'bitcoin',
-        host: 'api.ordimint.com',
-        port: 50001
-      }
-    },
+    // ethereum: {
+    //   blockchain: 'ethereum',
+    //   config: {
+    //     provider: 'https://ethereum-sepolia.gateway.tatum.io'
+    //   }
+    // },
+    // bitcoin: {
+    //   blockchain: 'bitcoin',
+    //   config: {
+    //     network: 'bitcoin',
+    //     host: 'api.ordimint.com',
+    //     port: 50001
+    //   }
+    // },
     spark: {
       blockchain: 'spark',
       config: {

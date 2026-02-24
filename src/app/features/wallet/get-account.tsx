@@ -7,13 +7,23 @@ import { ConsoleOutput } from '@/components/ConsoleOutput';
 import { colors } from '@/constants/colors';
 
 export default function GetAccountScreen() {
-  const { addresses, getNetworkAddresses, getAddress } = useWallet();
+  const { addresses, getNetworkAddresses, getAddress, callAccountMethod } = useWallet();
 
   return (
     <FeatureLayout
       title="Wallet Addresses"
       description="Inspect cached addresses and derive new ones on-demand."
     >
+      <ActionCard
+        title="Create Lightning Invoice"
+        description="Create a new Lightning invoice for a hardcoded amount of 100 sats."
+        fields={[]}
+        action={async () => {
+          return callAccountMethod('spark', 0, 'createLightningInvoice', { amountSats: 100 });
+        }}
+        actionLabel="Create Invoice"
+      />
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Cached Addresses Map</Text>
         <Text style={styles.sectionSubtitle}>All addresses derived and cached in memory. Note: You must derive an address first.</Text>

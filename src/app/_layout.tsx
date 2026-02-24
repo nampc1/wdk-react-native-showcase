@@ -12,7 +12,7 @@ import { Toaster } from 'sonner-native';
 import { colors } from '../constants/colors';
 import wdkConfigs from '../config/chain';
 // import the generated bundle
-// import bundle from '.wdk-bundle';
+import bundle from '.wdk-bundle';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -41,7 +41,8 @@ export default function RootLayout() {
   return (
     <WdkAppProvider
       wdkConfigs={wdkConfigs}
-      bundle={{ bundle: '' }} // add bundle here
+      /* @ts-ignore */
+      bundle={{ bundle }}
     >
       <SplashHandler>
         <GestureHandlerRootView style={{ flex: 1 }}>
